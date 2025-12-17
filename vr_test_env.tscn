@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://bwi3eamyxtwxy"]
+
+[ext_resource type="Script" uid="uid://de3oid7o8rx6d" path="res://vr_test_env.gd" id="1_nfvsl"]
+
+[node name="main_menu" type="Node3D"]
+script = ExtResource("1_nfvsl")
