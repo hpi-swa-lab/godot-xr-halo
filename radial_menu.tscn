@@ -6,5 +6,6 @@
 [node name="RadialMenu" type="Node3D"]
 script = ExtResource("1_yq78i")
 option_icons = Array[Texture2D]([ExtResource("2_yq78i"), ExtResource("2_yq78i"), ExtResource("2_yq78i"), ExtResource("2_yq78i")])
+icon_scale = 0.1
 
 [node name="Container" type="Node3D" parent="."]

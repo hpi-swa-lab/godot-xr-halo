@@ -96,6 +96,7 @@ func _on_menu_option(option_name: String):
 	# Wir leiten den Befehl einfach an den Manager weiter!
 	if manager.has_method("execute_menu_action"):
 		manager.execute_menu_action(option_name)
+		
 	print("MENU SELECTED: ", option_name)
 	
 	# Execute logic based on name
@@ -110,3 +111,15 @@ func _on_menu_option(option_name: String):
 				# Then delete
 				# Note: You might need to store a ref before dropping if _drop clears held_object
 				pass
+
+
+func force_open_menu():
+	if not is_enabled or not menu_instance:
+		return
+	printerr("well let's see")	
+	# Menü sichtbar machen
+	_open_menu()
+	
+	# Optional: Ein Haptisches Feedback auf der linken Hand geben, damit man merkt, dass das Menü da ist
+	if left_hand:
+		left_hand.trigger_haptic_pulse("haptic", 100.0, 0.1, 0.1, 0)
