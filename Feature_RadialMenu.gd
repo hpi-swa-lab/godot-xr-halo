@@ -9,7 +9,7 @@ extends Node
 
 var manager: XRInteractionManager
 var left_hand: XRController3D
-var camera: XRCamera3D
+var camera: Camera3D
 
 var menu_instance: Node3D
 var is_menu_open: bool = false
@@ -25,13 +25,23 @@ func setup(_manager, _fp, _right_controller, _raycast):
 		is_enabled = false
 		return
 	
-	# 2. Kamera finden (für "Look At")
-	var origin = manager.get_parent().get_parent() 
-	if origin:
-		
-		camera = origin.get_node_or_null("XRCamera3D")
-		printerr(camera)
+# 2. Kamera finden (Explizit nach XRCamera suchen)
+	# Wir gehen zum Eltern-Knoten (education_scene) und suchen dort nach XROrigin3D
+	var scene_root = manager.get_parent()
+	var origin_node = scene_root.get_node_or_null("XROrigin3D")
 	
+	if origin_node:
+		# Und darin suchen wir die XRCamera3D
+		camera = origin_node.get_node_or_null("XRCamera3D")
+	
+	# Fallback: Falls sie anders heißt, suchen wir rekursiv im Origin
+	if not camera and origin_node:
+		camera = _find_xrcamera_recursive(origin_node)
+
+	if camera:
+		print("RadialMenu: XRCamera3D gefunden -> ", camera.name)
+	else:
+		printerr("CRITICAL ERROR: XRCamera3D nicht gefunden! Prüfe Namen im Szenenbaum.")
 	# 3. Menü instanziieren
 	if menu_scene:
 		menu_instance = menu_scene.instantiate()
@@ -83,21 +93,24 @@ func _close_and_select():
 		menu_instance.confirm_selection()
 
 func _update_menu_transform():
-	# 1. Position relativ zur linken Hand setzen
-	# Wir nehmen die Rotation der Hand (basis) mal den Offset, damit "oben" auch "oben auf der Hand" ist
+	if not left_hand or not camera: return
+
+	# 1. POSITION: Relativ zur Hand (wie bisher)
+	# Wir nutzen global_transform der Hand, damit der Offset sich mitdreht
 	var target_pos = left_hand.global_position + (left_hand.global_transform.basis * menu_offset)
-	
-	# Wir nutzen 'lerp' für eine weiche Bewegung, oder setzen es direkt
-	# Direkt setzen ist besser, damit es nicht hinterherhinkt:
 	menu_instance.global_position = target_pos
 	
-	# 2. Das Menü soll zum Spieler schauen
-	if camera:
-		printerr('camera found')
-		menu_instance.look_at(camera.global_position, Vector3.UP)
-		# Falls das Menü falsch herum ist (Rückseite), hier einkommentieren:
-		# menu_instance.rotate_object_local(Vector3.UP, PI) 
-
+	# 2. ROTATION: Anschauen der Kamera (Billboard-Effekt)
+	# Wir nutzen look_at, damit die -Z Achse zur Kamera zeigt
+	menu_instance.look_at(camera.global_position, Vector3.UP)
+	
+	# 3. KORREKTUR (Der wichtige Teil!)
+	# Da look_at die Rückseite (-Z) ausrichtet, und unser Mesh wahrscheinlich vorne (+Z) ist,
+	# müssen wir es einmal um 180 Grad (PI) um die Y-Achse drehen.
+	menu_instance.rotate_object_local(Vector3.UP, PI)
+	
+	
+	
 func _handle_thumbstick():
 	# Stick-Eingabe an das Visual-Skript weitergeben
 	var thumbstick = left_hand.get_vector2("primary_2d_axis")
@@ -109,3 +122,13 @@ func _on_menu_option(option_name: String):
 	# Befehl an Manager weiterleiten
 	if manager.has_method("execute_menu_action"):
 		manager.execute_menu_action(option_name)
+
+
+func _find_xrcamera_recursive(node: Node) -> Camera3D:
+	for child in node.get_children():
+		if child is XRCamera3D:
+			return child
+		# Tiefer suchen
+		var res = _find_xrcamera_recursive(child)
+		if res: return res
+	return null
