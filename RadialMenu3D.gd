@@ -15,8 +15,8 @@ signal option_selected(option_name)
 @export var inner_radius: float = 0.05
 @export var color_normal: Color = Color(0.2, 0.2, 0.2, 0.8)
 @export var color_hover: Color = Color(1.0, 0.0, 0.0, 0.8)
-@export var icon_scale: float = 0.001 # Größe der Icons anpassen
-
+#@export var icon_scale: float = 0.001 # Größe der Icons anpassen
+@export_range(0.00001, 0.01, 0.00001, "or_greater") var icon_scale: float = 0.0005
 # --- INTERNE VARIABLEN ---
 var slices: Array[MeshInstance3D] = []
 var selected_index: int = -1
