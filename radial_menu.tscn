@@ -1,0 +1,10 @@
+[gd_scene load_steps=3 format=3 uid="uid://ceyn3v05cdtf6"]
+
+[ext_resource type="Script" uid="uid://byqewvxwvbi1t" path="res://RadialMenu3D.gd" id="1_yq78i"]
+[ext_resource type="Texture2D" uid="uid://bb2ugayn68i85" path="res://icon.svg" id="2_yq78i"]
+
+[node name="RadialMenu" type="Node3D"]
+script = ExtResource("1_yq78i")
+option_icons = Array[Texture2D]([ExtResource("2_yq78i"), ExtResource("2_yq78i"), ExtResource("2_yq78i"), ExtResource("2_yq78i")])
+
+[node name="Container" type="Node3D" parent="."]

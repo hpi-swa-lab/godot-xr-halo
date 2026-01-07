@@ -3,13 +3,13 @@ class_name XRInteractionManager
 
 # --- EXPORTS ---
 @export var fp: Node3D           # FunctionPointer (Rechts)
-@export var controller: XRController3D # Rechte Hand (Zielen/Greifen)
-@export var left_controller: XRController3D # <--- NEU: Linke Hand (Skalieren)
+@export var controller: XRController3D 
+@export var left_controller: XRController3D 
 
 # --- PUBLIC STATE ---
 var held_object: Node3D = null
 var raycast: RayCast3D
-
+var vent: bool = false
 # --- SIGNALS ---
 signal object_picked_up(obj)
 signal object_dropped(obj)
@@ -28,7 +28,7 @@ func _ready():
 		if not controller.button_pressed.is_connected(_on_button_pressed):
 			controller.button_pressed.connect(_on_button_pressed)
 	
-	# Safety Check für Links
+	# Safety Check 
 	if not left_controller:
 		printerr("WARNUNG: Linker Controller im InteractionManager nicht zugewiesen!")
 
@@ -68,3 +68,8 @@ func _drop():
 		var obj_ref = held_object
 		held_object = null
 		emit_signal("object_dropped", obj_ref)
+		
+		
+		
+func venti():
+	vent = true

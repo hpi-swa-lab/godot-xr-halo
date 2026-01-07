@@ -3,8 +3,8 @@ extends Node
 @export var is_enabled: bool = true
 
 var manager: XRInteractionManager
-var controller: XRController3D # Rechte Hand (nur für Position)
-var rotate_hand: XRController3D # Linke Hand (für Rotation)
+var controller: XRController3D 
+var rotate_hand: XRController3D # Linke Hand (für Rotation
 var raycast: RayCast3D
 
 var rotation_offset: Basis

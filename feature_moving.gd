@@ -13,10 +13,10 @@ func setup(_manager, _fp, _controller, _raycast):
 	controller = _controller
 	raycast = _raycast
 	
-	# Auf Signale hören
+	# waiting for signal
 	manager.object_picked_up.connect(_on_picked)
 	
-	# Prozess deaktivieren wenn nichts gehalten wird (Spart Performance)
+	# Prozess deaktivieren falls nichts gehalten wird
 	set_process(false)
 
 func _on_picked(obj):

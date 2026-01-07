@@ -16,3 +16,5 @@ mesh = SubResource("CapsuleMesh_onrkg")
 
 [node name="CollisionShape3D" type="CollisionShape3D" parent="."]
 shape = SubResource("ConcavePolygonShape3D_i3pqv")
+
+[node name="XRController3D" type="XRController3D" parent="."]
