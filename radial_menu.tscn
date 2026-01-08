@@ -1,10 +1,14 @@
-[gd_scene load_steps=3 format=3 uid="uid://ceyn3v05cdtf6"]
+[gd_scene load_steps=6 format=3 uid="uid://ceyn3v05cdtf6"]
 
 [ext_resource type="Script" uid="uid://byqewvxwvbi1t" path="res://RadialMenu3D.gd" id="1_yq78i"]
-[ext_resource type="Texture2D" uid="uid://bb2ugayn68i85" path="res://icon.svg" id="2_yq78i"]
+[ext_resource type="Texture2D" uid="uid://dq8qalhwfjmtl" path="res://move.png" id="2_jcadp"]
+[ext_resource type="Texture2D" uid="uid://cjs5j15e4uiap" path="res://scale.png" id="3_to0ve"]
+[ext_resource type="Texture2D" uid="uid://twnfrpvy7s36" path="res://rotate.png" id="4_cc3mm"]
+[ext_resource type="Texture2D" uid="uid://7dwehtpldonm" path="res://more.png" id="5_48ybq"]
 
 [node name="RadialMenu" type="Node3D"]
 script = ExtResource("1_yq78i")
-option_icons = Array[Texture2D]([ExtResource("2_yq78i"), ExtResource("2_yq78i"), ExtResource("2_yq78i"), ExtResource("2_yq78i")])
+option_icons = Array[Texture2D]([ExtResource("2_jcadp"), ExtResource("3_to0ve"), ExtResource("4_cc3mm"), ExtResource("5_48ybq")])
+icon_scale = 9.999999999999996e-05
 
 [node name="Container" type="Node3D" parent="."]

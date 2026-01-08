@@ -27,16 +27,9 @@ func setup(_manager, _fp, _right_controller, _raycast):
 	
 # 2. Kamera finden (Explizit nach XRCamera suchen)
 	# Wir gehen zum Eltern-Knoten (education_scene) und suchen dort nach XROrigin3D
-	var scene_root = manager.get_parent()
-	var origin_node = scene_root.get_node_or_null("XROrigin3D")
 	
-	if origin_node:
-		# Und darin suchen wir die XRCamera3D
-		camera = origin_node.get_node_or_null("XRCamera3D")
 	
-	# Fallback: Falls sie anders heißt, suchen wir rekursiv im Origin
-	if not camera and origin_node:
-		camera = _find_xrcamera_recursive(origin_node)
+	camera = manager.get_parent().get_node("XROrigin3D").get_node("XRCamera3D")
 
 	if camera:
 		print("RadialMenu: XRCamera3D gefunden -> ", camera.name)

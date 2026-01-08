@@ -125,7 +125,6 @@ func _add_icon(parent, start, end, texture):
 	parent.add_child(sprite)
 
 # --- INPUT & LOGIK ---
-
 func update_input(joystick_vector: Vector2):
 	# Deadzone
 	if joystick_vector.length() < 0.2:
