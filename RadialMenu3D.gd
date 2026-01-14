@@ -6,7 +6,7 @@ signal option_selected(option_name)
 # --- KONFIGURATION (Daten) ---
 # Wir nutzen zwei Listen statt einer externen Klasse. 
 # WICHTIG: Achte darauf, dass beide Listen gleich lang sind!
-@export var option_ids: Array[String] = ["Move", "Scale", "Delete", "Reset"]
+@export var option_ids: Array[String] = ["Move", "Scale", "Rotate", "Reset"]
 @export var option_icons: Array[Texture2D]
 
 # --- KONFIGURATION (Optik) ---

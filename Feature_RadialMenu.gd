@@ -2,9 +2,9 @@ extends Node
 
 @export var is_enabled: bool = true
 @export var menu_scene: PackedScene 
-@export var activation_button: String = "by_button" 
+@export var activation_button: String = "primary_click" 
 @export var menu_offset: Vector3 = Vector3(0, 0.2, 0) 
-@export var shortcut_action: String = "Move"
+@export var shortcut_action: String = "Rotate"
 @export var selection_button: String = "primary_click" 
 
 var _selection_btn_was_pressed: bool = false # Damit wir nicht dauerfeuern
