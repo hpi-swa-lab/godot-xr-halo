@@ -2,11 +2,12 @@ extends Node
 
 @export var is_enabled: bool = true
 @export var menu_scene: PackedScene 
-# "primary_click" ist oft der Stick-Klick. 
-# Besser wäre "ax_button" (X-Taste) oder "by_button" (Y-Taste), probiere es aus!
-@export var activation_button: String = "primary_click" 
-@export var menu_offset: Vector3 = Vector3(0, 0.2, 0) # 20cm über der Hand
+@export var activation_button: String = "by_button" 
+@export var menu_offset: Vector3 = Vector3(0, 0.2, 0) 
+@export var shortcut_action: String = "Move"
+@export var selection_button: String = "primary_click" 
 
+var _selection_btn_was_pressed: bool = false # Damit wir nicht dauerfeuern
 var manager: XRInteractionManager
 var left_hand: XRController3D
 var camera: Camera3D
@@ -24,9 +25,6 @@ func setup(_manager, _fp, _right_controller, _raycast):
 		printerr("ERROR: Radial Menu needs Left Controller!")
 		is_enabled = false
 		return
-	
-# 2. Kamera finden (Explizit nach XRCamera suchen)
-	# Wir gehen zum Eltern-Knoten (education_scene) und suchen dort nach XROrigin3D
 	
 	
 	camera = manager.get_parent().get_node("XROrigin3D").get_node("XRCamera3D")
@@ -48,25 +46,31 @@ func _process(delta):
 	if not is_enabled or not left_hand or not menu_instance:
 		return
 		
-	# --- 1. BUTTON TOGGLE LOGIK (AN / AUS) ---
-	# Wir prüfen, ob der Knopf gedrückt ist (z.B. Stick rein drücken)
-	var is_pressed = left_hand.is_button_pressed(activation_button)
-	
-	# Logik: Nur reagieren, wenn der Knopf FRISCH gedrückt wurde (nicht gehalten)
-	if is_pressed and not _btn_was_pressed:
+	# 1. MENÜ ÖFFNEN / SCHLIESSEN (Toggle mit X-Taste)
+	var is_act_pressed = left_hand.is_button_pressed(activation_button)
+	if is_act_pressed and not _btn_was_pressed:
 		if is_menu_open:
-			_close_and_select()
+			# Optional: Menü nur schließen ohne Auswahl? 
+			# Oder auch hier auswählen? Das hängt von deinem Geschmack ab.
+			_close_and_select() 
 		else:
 			force_open_menu()
-	
-	_btn_was_pressed = is_pressed # Zustand merken für nächsten Frame
+	_btn_was_pressed = is_act_pressed
 
-	# --- 2. UPDATE LOOP (WICHTIG!) ---
+	# 2. UPDATE & SELEKTION (Nur wenn Menü offen)
 	if is_menu_open:
-		# Hier updaten wir JEDEN Frame die Position
 		_update_menu_transform()
 		_handle_thumbstick()
-
+		
+		# --- NEU: BESTÄTIGEN MIT TRIGGER ---
+		var is_sel_pressed = left_hand.is_button_pressed(selection_button)
+		
+		# Wir reagieren nur auf den frischen Klick (Flanke)
+		if is_sel_pressed and not _selection_btn_was_pressed:
+			print("Selection Button pressed -> Confirming!")
+			_close_and_select()
+			
+		_selection_btn_was_pressed = is_sel_pressed
 # Öffentliche Funktion (kann auch vom Manager aufgerufen werden)
 func force_open_menu():
 	if not is_enabled or not menu_instance: return
@@ -81,9 +85,18 @@ func _close_and_select():
 	is_menu_open = false
 	menu_instance.visible = false
 	
-	# Befehl ausführen
-	if menu_instance.has_method("confirm_selection"):
+	# Hier ist die neue Logik:
+	# Wir greifen auf die Variable 'selected_index' im RadialMenu3D Skript zu.
+	# -1 bedeutet: Der Stick ist in der Mitte (nichts ausgewählt).
+	
+	if menu_instance.selected_index != -1:
+		# Fall A: Der Spieler hat etwas mit dem Stick ausgewählt
 		menu_instance.confirm_selection()
+	else:
+		# Fall B: Nichts ausgewählt -> Wir erzwingen "Move" (Dein Test-Wunsch)
+		print("Keine Auswahl am Stick -> Nutze Shortcut: ", shortcut_action)
+		if manager.has_method("execute_menu_action"):
+			manager.execute_menu_action(shortcut_action)
 
 func _update_menu_transform():
 	if not left_hand or not camera: return
@@ -103,11 +116,23 @@ func _update_menu_transform():
 	menu_instance.rotate_object_local(Vector3.UP, PI)
 	
 	
-	
 func _handle_thumbstick():
-	# Stick-Eingabe an das Visual-Skript weitergeben
-	var thumbstick = left_hand.get_vector2("primary_2d_axis")
-	if menu_instance.has_method("update_input"):
+	if not left_hand: 
+		print("ERROR: Linke Hand fehlt!")
+		return
+
+	# Wir holen den Input primary_2d_axis
+	var thumbstick = left_hand.get_vector2("primary")
+	
+	# DEBUG: Wir spammen kurz die Konsole voll, um zu sehen, ob Zahlen ankommen
+	if thumbstick.length() > 0.01:
+		print("INPUT DETECTED: ", thumbstick)
+	else:
+		# Optional: Um zu sehen, ob es NULL ist oder (0,0)
+		pass 
+
+	# Weitergabe an das Menü
+	if menu_instance and menu_instance.has_method("update_input"):
 		menu_instance.update_input(thumbstick)
 
 func _on_menu_option(option_name: String):
@@ -115,13 +140,3 @@ func _on_menu_option(option_name: String):
 	# Befehl an Manager weiterleiten
 	if manager.has_method("execute_menu_action"):
 		manager.execute_menu_action(option_name)
-
-
-func _find_xrcamera_recursive(node: Node) -> Camera3D:
-	for child in node.get_children():
-		if child is XRCamera3D:
-			return child
-		# Tiefer suchen
-		var res = _find_xrcamera_recursive(child)
-		if res: return res
-	return null
