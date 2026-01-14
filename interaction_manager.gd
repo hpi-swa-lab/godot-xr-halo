@@ -58,6 +58,11 @@ func _select_object_and_open_menu(target: Node3D):
 	held_object = target
 	print("MANAGER: Selected ", held_object.name)
 	
+	# --- HIER IST DER FIX ---
+	# Wir müssen sofort Bescheid sagen, damit das Halo Menü aufgehen kann.
+	emit_signal("object_picked_up", held_object) 
+	# ------------------------
+	
 	# Menü öffnen
 	if radial_menu_feature and radial_menu_feature.has_method("force_open_menu"):
 		radial_menu_feature.force_open_menu()

@@ -1,0 +1,16 @@
+[gd_scene load_steps=3 format=3 uid="uid://bpxiijl5dppkb"]
+
+[ext_resource type="Script" uid="uid://i60qy8tqpy6b" path="res://object_halo_menu.gd" id="1_hwy7f"]
+[ext_resource type="PackedScene" uid="uid://bxfx5sd6i3ahn" path="res://halo_button.tscn" id="2_ndaog"]
+
+[node name="ObjectHaloMenu" type="Node3D" node_paths=PackedStringArray("buttons")]
+script = ExtResource("1_hwy7f")
+buttons = [NodePath("move"), NodePath("scale"), NodePath("rotate"), NodePath("HaloButton4")]
+
+[node name="move" parent="." instance=ExtResource("2_ndaog")]
+
+[node name="scale" parent="." instance=ExtResource("2_ndaog")]
+
+[node name="rotate" parent="." instance=ExtResource("2_ndaog")]
+
+[node name="HaloButton4" parent="." instance=ExtResource("2_ndaog")]
