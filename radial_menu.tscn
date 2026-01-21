@@ -1,14 +1,19 @@
-[gd_scene load_steps=6 format=3 uid="uid://ceyn3v05cdtf6"]
+[gd_scene load_steps=7 format=3 uid="uid://ceyn3v05cdtf6"]
 
 [ext_resource type="Script" uid="uid://byqewvxwvbi1t" path="res://RadialMenu3D.gd" id="1_yq78i"]
 [ext_resource type="Texture2D" uid="uid://dq8qalhwfjmtl" path="res://move.png" id="2_jcadp"]
 [ext_resource type="Texture2D" uid="uid://cjs5j15e4uiap" path="res://scale.png" id="3_to0ve"]
 [ext_resource type="Texture2D" uid="uid://twnfrpvy7s36" path="res://rotate.png" id="4_cc3mm"]
 [ext_resource type="Texture2D" uid="uid://7dwehtpldonm" path="res://more.png" id="5_48ybq"]
+[ext_resource type="AudioStream" uid="uid://dlvljwbm8phlx" path="res://Roblox Death Sound Oof - Sound Effect HD.mp3" id="6_to0ve"]
 
 [node name="RadialMenu" type="Node3D"]
 script = ExtResource("1_yq78i")
 option_icons = Array[Texture2D]([ExtResource("2_jcadp"), ExtResource("3_to0ve"), ExtResource("4_cc3mm"), ExtResource("5_48ybq")])
+color_normal = Color(0.2, 0.2, 0.2, 0.8)
+color_hover = Color(1, 0, 0, 0.8)
 icon_scale = 9.999999999999996e-05
+icon_rotation_offset = Vector3(0, 0, 0)
+sound_error = ExtResource("6_to0ve")
 
 [node name="Container" type="Node3D" parent="."]

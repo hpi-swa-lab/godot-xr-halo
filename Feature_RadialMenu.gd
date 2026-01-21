@@ -16,7 +16,7 @@ enum MenuMode {
 @export var halo_menu_scene: PackedScene # Ziehe hier ObjectHaloMenu.tscn rein
 
 @export_group("Input")
-@export var activation_button: String = "primary_click" # Hand-Mode: Öffnen (X)
+@export var activation_button: String = "grip_click" # Hand-Mode: Öffnen (X)
 @export var selection_button: String = "trigger_click" # Beides: Bestätigen
 @export var menu_offset: Vector3 = Vector3(0, 0.2, 0) 
 @export var shortcut_action: String = "Rotate"
@@ -35,6 +35,7 @@ var _selection_btn_was_pressed: bool = false
 
 # Für Raycast Modus
 var current_hovered_button: Area3D = null
+var is_showing_status_icon: bool = false
 
 
 func setup(_manager, _fp, _right_controller, _raycast):
@@ -49,7 +50,7 @@ func setup(_manager, _fp, _right_controller, _raycast):
 		return
 	
 	# Kamera sicher finden
-	camera = manager.get_viewport().get_camera_3d()
+	#camera = manager.get_viewport().get_camera_3d()
 	if not camera:
 		# Fallback Suche
 		camera = manager.get_parent().get_node_or_null("XROrigin3D/XRCamera3D")
@@ -92,29 +93,50 @@ func _process(delta):
 			_process_object_mode()
 
 # --- LOGIK A: HAND MENU ---
+# In Feature_RadialMenu.gd
+
 func _process_hand_mode():
 	if not left_hand: return
 
-	# 1. Öffnen/Schließen (X-Taste)
+	# 1. Taster Status holen
 	var is_act_pressed = left_hand.is_button_pressed(activation_button)
+	
+	# 2. Öffnen/Schließen Logik
 	if is_act_pressed and not _btn_was_pressed:
+		_btn_was_pressed = true # Status sofort merken
+		
 		if is_menu_open:
-			_close_and_select() 
+			# Wenn Menü offen -> Bestätigen & Wechseln
+			_confirm_and_switch_view()
+			return # WICHTIG: Hier abbrechen, damit nicht im selben Frame weitergemacht wird!
+			
+		elif is_showing_status_icon:
+			# Wenn Icon sichtbar -> Menü öffnen
+			_open_full_menu()
+			return # WICHTIG: Abbrechen!
+			
 		else:
-			force_open_menu()
+			# Nichts offen -> Menü öffnen
+			_open_full_menu()
+			return # WICHTIG: Abbrechen!
+			
+	# Status aktualisieren für den nächsten Frame
 	_btn_was_pressed = is_act_pressed
 
-	# 2. Update & Input
+	# 3. Menü-Input (Läuft nur, wenn wir oben NICHT gerade erst geöffnet haben)
 	if is_menu_open:
 		_update_menu_transform()
 		_handle_thumbstick()
 		
-		# Bestätigen mit Trigger
+		# Bestätigen mit Trigger / Selection Button
 		var is_sel_pressed = left_hand.is_button_pressed(selection_button)
 		if is_sel_pressed and not _selection_btn_was_pressed:
-			_close_and_select()
+			_confirm_and_switch_view()
 		_selection_btn_was_pressed = is_sel_pressed
-
+	
+	# 4. Icon folgt der Hand
+	if is_showing_status_icon:
+		_update_menu_transform()
 # --- LOGIK B: OBJEKT HALO ---
 func _process_object_mode():
 	if not is_menu_open: return
@@ -163,8 +185,21 @@ func _on_object_dropped(_obj):
 
 # --- HELPER ---
 func force_open_menu():
+	if not is_enabled or not menu_instance: return
+	
+	# 1. Logik-Status zurücksetzen
+	# Wir sagen: "Nein, wir zeigen kein Icon mehr, wir sind wieder im Menü-Modus"
 	is_menu_open = true
+	is_showing_status_icon = false 
+	
+	# 2. Sichtbarkeit einschalten
 	menu_instance.visible = true
+	
+	# 3. Visuelle Darstellung zurücksetzen (Tortenstücke anzeigen!)
+	if menu_instance.has_method("show_menu_view"):
+		menu_instance.show_menu_view()
+	
+	# 4. Position sofort aktualisieren
 	_update_menu_transform()
 
 func _close_and_select():
@@ -201,3 +236,51 @@ func _execute_raycast_button(btn):
 		print("Halo Action: ", btn.action_name)
 		if manager.has_method("execute_menu_action"):
 			manager.execute_menu_action(btn.action_name)
+			
+			
+			
+func _open_full_menu():
+	is_menu_open = true
+	is_showing_status_icon = false
+	menu_instance.visible = true
+	
+	# Sag dem View: Zeig die Tortenstücke
+	if menu_instance.has_method("show_menu_view"):
+		menu_instance.show_menu_view()
+		
+	_update_menu_transform()
+
+func _confirm_and_switch_view():
+	# 1. Aktuelle Auswahl holen
+	var selected_action = ""
+	if "selected_index" in menu_instance and "option_ids" in menu_instance:
+		var idx = menu_instance.selected_index
+		if idx != -1:
+			selected_action = menu_instance.option_ids[idx]
+			menu_instance.confirm_selection() # Sound abspielen & Signal senden
+		else:
+			# Shortcut falls nichts gewählt (z.B. Reset)
+			# selected_action = shortcut_action
+			pass
+
+	# 2. Wenn wir was gewählt haben -> Umschalten auf Icon
+	if selected_action != "" and selected_action != "Reset": 
+		# Reset sollte das Menü eher schließen oder Icon löschen
+		
+		is_menu_open = false # Keine Eingaben mehr
+		is_showing_status_icon = true # Aber sichtbar lassen!
+		menu_instance.visible = true
+		
+		if menu_instance.has_method("show_active_icon_view"):
+			menu_instance.show_active_icon_view(selected_action)
+			
+	else:
+		# Bei "Nichts" oder "Reset" -> Ganz schließen
+		close_completely()
+
+# Wird vom Manager aufgerufen, wenn "None" gesetzt wird (z.B. nach Drop)
+func close_completely():
+	is_menu_open = false
+	is_showing_status_icon = false
+	if menu_instance:
+		menu_instance.visible = false

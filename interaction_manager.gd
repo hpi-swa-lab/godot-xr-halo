@@ -42,14 +42,23 @@ func _ready():
 
 func _on_button_pressed(action_name: String):
 	if action_name == fp.active_button_action:
-		# Prüfen, ob wir ein Objekt treffen
+		
+		# --- FIX: ZUSTANDS-CHECK ---
+		# 1. Sind wir gerade in einem Modus (Move, Scale, Rotate)?
+		if active_mode != "None" and held_object != null:
+			# JA: Dann bedeutet der Klick "Bestätigen / Platzieren"
+			print("MANAGER: Klick -> Platzieren (Drop)")
+			_deselect_object()
+			return # WICHTIG: Hier beenden, damit nicht sofort neu selektiert wird!
+
+		# 2. Nein: Wir sind "Idle" -> Suchen wir ein neues Objekt?
 		var target = fp.last_target
 		
 		if target and is_instance_valid(target):
-			# Objekt merken + Menü öffnen
+			# Neues Objekt gefunden -> Menü öffnen
 			_select_object_and_open_menu(target)
 		else:
-			# Klick ins Leere -> Alles abwählen
+			# Klick ins Leere -> Sicherheitshalber alles abwählen
 			if held_object:
 				_deselect_object()
 
@@ -67,6 +76,10 @@ func _deselect_object():
 	held_object = null
 	active_mode = "None"
 	_set_features_enabled(false, false, false) # Alle aus
+	
+	# --- NEU: LINKE HAND AUCH RESETTEN ---
+	if radial_menu_feature and radial_menu_feature.has_method("close_completely"):
+		radial_menu_feature.close_completely()
 
 # --- MENÜ LOGIK (STATE MACHINE) ---
 func execute_menu_action(action: String):
@@ -97,6 +110,10 @@ func execute_menu_action(action: String):
 			
 		_:
 			printerr("Unbekannter Modus: ", action)
+			
+	if action == "Reset":
+		if radial_menu_feature and radial_menu_feature.has_method("close_completely"):
+			radial_menu_feature.close_completely()
 
 # --- HELPER: FEATURES UMSCHALTEN ---
 func _set_features_enabled(move: bool, scale: bool, rotate: bool):
@@ -134,14 +151,22 @@ func _start_interaction():
 # --- DROP / CLEANUP ---
 func _drop():
 	if held_object:
-		raycast.remove_exception(held_object)
+		# WICHTIG: Exception entfernen, BEVOR wir irgendwas anderes machen
+		if raycast:
+			raycast.remove_exception(held_object)
+			raycast.force_raycast_update() # Update erzwingen, damit er das Objekt sofort wieder "sieht"
+		
 		if held_object is RigidBody3D:
 			held_object.freeze = false
 			held_object.linear_velocity = Vector3.ZERO
+			held_object.angular_velocity = Vector3.ZERO
 		
 		var obj_ref = held_object
+		
 		# Signal senden zum Stoppen aller Features
 		emit_signal("object_dropped", obj_ref)
+		
+		print("MANAGER: Objekt gedroppt und Exception entfernt.")
 
 func _delete_held_object():
 	if held_object:
@@ -149,3 +174,4 @@ func _delete_held_object():
 		_drop()
 		obj.queue_free()
 		emit_signal("object_deleted")
+		

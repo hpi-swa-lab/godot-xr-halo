@@ -1,19 +1,19 @@
+# Feature_Moving.gd
 extends Node
 
-@export var is_enabled: bool = true # Wird vom Manager gesteuert
+@export var is_enabled: bool = true 
 
 var manager: XRInteractionManager
 var controller: XRController3D
 var raycast: RayCast3D
 
-var rotation_offset: Basis
+# var rotation_offset: Basis  <-- WURDE ENTFERNT (Brauchen wir nicht mehr)
 
 func setup(_manager, _fp, _controller, _raycast):
 	manager = _manager
 	controller = _controller
 	raycast = _raycast
 	
-	# WICHTIG: Signale IMMER im Setup verbinden, nicht während der Laufzeit
 	if not manager.object_picked_up.is_connected(_on_picked):
 		manager.object_picked_up.connect(_on_picked)
 	
@@ -23,39 +23,36 @@ func setup(_manager, _fp, _controller, _raycast):
 	set_process(false)
 
 func _on_picked(obj):
-	# --- DER TORWÄCHTER (WICHTIG!) ---
-	# Wenn der Manager sagt "Moving ist aus", brechen wir hier sofort ab.
-	# Auch wenn das Signal kommt, ignorieren wir es.
-	if not is_enabled:
-		return 
-
-	# Ab hier läuft der normale Code weiter
-	print("MOVING FEATURE: Started")
+	if not is_enabled: return 
 	
-	rotation_offset = controller.global_transform.basis.inverse() * obj.global_transform.basis
+	# Wir müssen hier keinen Rotation-Offset mehr berechnen, 
+	# da wir die Rotation des Objekts einfach so lassen, wie sie ist.
+	
 	set_process(true)
 
 func _on_dropped(_obj):
-	# Stoppt das Script sofort
 	set_process(false)
 
 func _process(_delta):
-	# Doppelte Sicherheit
 	if not is_enabled or not manager: 
 		set_process(false)
 		return
 		
 	var obj = manager.held_object
-	if not obj: return 
+	if not obj or not is_instance_valid(obj): 
+		set_process(false)
+		return 
 
-	# 1. Position Logik
+	# 1. Position Logik (Bleibt gleich)
+	# Wir ändern NUR die global_position. Die Rotation (Basis) bleibt unberührt.
 	if raycast.is_colliding():
+		# Wir setzen die Position auf den Kollisionspunkt
 		obj.global_position = raycast.get_collision_point()
 	else:
+		# Wenn wir in den Himmel zeigen, halten wir es in fester Distanz
 		var controller_forward = -raycast.global_transform.basis.z
 		obj.global_position = raycast.global_position + (controller_forward * 2.0)
 
-	# 2. Rotation Logik
-	var current_scale = obj.scale
-	obj.global_transform.basis = controller.global_transform.basis * rotation_offset
-	obj.scale = current_scale
+	# 2. Rotation Logik <-- WURDE ENTFERNT
+	# Da wir diesen Block gelöscht haben, behält das Objekt einfach seine
+	# aktuelle Rotation bei, egal wie du den Controller drehst.
