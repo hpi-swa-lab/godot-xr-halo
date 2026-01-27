@@ -187,19 +187,17 @@ func _on_object_dropped(_obj):
 func force_open_menu():
 	if not is_enabled or not menu_instance: return
 	
-	# 1. Logik-Status zurücksetzen
-	# Wir sagen: "Nein, wir zeigen kein Icon mehr, wir sind wieder im Menü-Modus"
 	is_menu_open = true
 	is_showing_status_icon = false 
-	
-	# 2. Sichtbarkeit einschalten
 	menu_instance.visible = true
 	
-	# 3. Visuelle Darstellung zurücksetzen (Tortenstücke anzeigen!)
 	if menu_instance.has_method("show_menu_view"):
 		menu_instance.show_menu_view()
+
+	# NEU: Auch hier resetten
+	if menu_instance.has_method("reset_selection"):
+		menu_instance.reset_selection()
 	
-	# 4. Position sofort aktualisieren
 	_update_menu_transform()
 
 func _close_and_select():
@@ -244,11 +242,18 @@ func _open_full_menu():
 	is_showing_status_icon = false
 	menu_instance.visible = true
 	
-	# Sag dem View: Zeig die Tortenstücke
+	# 1. Ansicht zurücksetzen (Slices zeigen)
 	if menu_instance.has_method("show_menu_view"):
 		menu_instance.show_menu_view()
+	
+	# 2. NEU: Auswahl zurücksetzen (damit es frisch startet)
+	if menu_instance.has_method("reset_selection"):
+		menu_instance.reset_selection()
 		
 	_update_menu_transform()
+
+# Falls du die 'force_open_menu' Funktion auch nutzt (für Objekt-Selektion), dort auch:
+
 
 func _confirm_and_switch_view():
 	# 1. Aktuelle Auswahl holen

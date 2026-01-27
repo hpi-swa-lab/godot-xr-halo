@@ -14,12 +14,11 @@ signal option_selected(option_name)
 @export var color_normal: Color = Color(0.1, 0.1, 0.1, 0.5) 
 @export var color_hover: Color = Color(1.0, 0.2, 0.2, 0.9) 
 @export_range(0.00001, 0.01, 0.00001, "or_greater") var icon_scale: float = 0.0005
-@export var icon_rotation_offset: Vector3 = Vector3(-90, 0, 0) # Standard flachliegend
+@export var icon_rotation_offset: Vector3 = Vector3(-90, 0, 0) 
+
 # --- KONFIGURATION (Audio) ---
 @export_group("Audio")
-@export var sound_error: AudioStream # <--- ZIEHE HIER DEINEN SOUND REIN
-
-
+@export var sound_error: AudioStream 
 
 # --- INTERNE VARIABLEN ---
 var slices: Array[MeshInstance3D] = []
@@ -28,18 +27,15 @@ var audio_player: AudioStreamPlayer3D
 var center_sprite: Sprite3D
 
 func _ready():
-	# 1. Audio Player erstellen (wie vorher)
 	audio_player = AudioStreamPlayer3D.new()
 	add_child(audio_player)
 	
-	# 2. NEU: Center Icon erstellen
 	center_sprite = Sprite3D.new()
-	center_sprite.pixel_size = icon_scale * 1.5 # Etwas größer als die normalen Icons
-	center_sprite.billboard = BaseMaterial3D.BILLBOARD_DISABLED # Flach auf der Hand
-	center_sprite.no_depth_test = true # Immer sichtbar
-	center_sprite.render_priority = 2 # Über allem anderen
-	center_sprite.visible = false # Erstmal verstecken
-	# Rotation korrigieren (damit es flach liegt)
+	center_sprite.pixel_size = icon_scale * 1.5 
+	center_sprite.billboard = BaseMaterial3D.BILLBOARD_DISABLED 
+	center_sprite.no_depth_test = true 
+	center_sprite.render_priority = 2 
+	center_sprite.visible = false 
 	center_sprite.rotation_degrees.x = -90 
 	add_child(center_sprite)
 	
@@ -64,15 +60,12 @@ func generate_menu():
 		var start_angle = i * angle_per_slice
 		var end_angle = (i + 1) * angle_per_slice
 		
-		# 1. Mesh
 		var slice_mesh = _create_slice_mesh(start_angle, end_angle)
 		
-		# 2. Node
 		var slice_obj = MeshInstance3D.new()
 		slice_obj.mesh = slice_mesh
 		slice_obj.name = "Slice_" + option_ids[i]
 		
-		# 3. Material (Unshaded)
 		var mat = StandardMaterial3D.new()
 		mat.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 		mat.albedo_color = color_normal
@@ -83,7 +76,6 @@ func generate_menu():
 		add_child(slice_obj)
 		slices.append(slice_obj)
 		
-		# 4. Icon
 		if i < option_icons.size() and option_icons[i] != null:
 			_add_icon(slice_obj, start_angle, end_angle, option_icons[i])
 
@@ -123,22 +115,36 @@ func _add_icon(parent, start, end, texture):
 	sprite.modulate = Color(1, 1, 1, 1)
 	parent.add_child(sprite)
 
-# --- INPUT & LOGIK ---
+# --- INPUT LOGIK (HIER WAR DAS PROBLEM) ---
 func update_input(joystick_vector: Vector2):
-	if joystick_vector.length() < 0.2:
-		if selected_index != -1:
-			selected_index = -1
-			_update_selection_visuals()
+	# 1. Deadzone Check
+	# Wir nehmen 0.25. Wenn kleiner -> TU NICHTS (Auswahl bleibt kleben)
+	if joystick_vector.length() < 0.25: 
 		return
+		
+	# 2. Winkel berechnen
 	var angle = joystick_vector.angle()
 	if angle < 0: angle += TAU
+	
 	var count = option_ids.size()
 	if count == 0: return
+	
 	var angle_per_slice = TAU / count
 	var raw_index = int(angle / angle_per_slice) % count
+	
 	if selected_index != raw_index:
 		selected_index = raw_index
 		_update_selection_visuals()
+		print("SELECTION CHANGED: ", option_ids[selected_index]) # Debug
+
+func reset_selection():
+	print("SELECTION RESET") # Debug
+	selected_index = -1
+	for i in range(slices.size()):
+		var mat = slices[i].material_override
+		mat.albedo_color = color_normal
+		slices[i].scale = Vector3.ONE
+		slices[i].position.z = 0.0
 
 func _update_selection_visuals():
 	for i in range(slices.size()):
@@ -150,22 +156,19 @@ func _update_selection_visuals():
 			slice.position.z = 0.001
 		else:
 			mat.albedo_color = color_normal
-			slice.scale = Vector3(1.0, 1.0, 1.0)
+			slice.scale = Vector3.ONE
 			slice.position.z = 0.0
 
 func confirm_selection():
 	if selected_index >= 0 and selected_index < option_ids.size():
 		var selected_name = option_ids[selected_index]
+		print("CONFIRMED: ", selected_name) # Debug
 		
-		# --- SOUND CHECK ---
 		if selected_name == "Reset":
 			if sound_error:
 				audio_player.stream = sound_error
 				audio_player.play()
-			else:
-				print("WARNUNG: Kein Error-Sound im Inspector zugewiesen!")
 		
-		# Signal senden
 		emit_signal("option_selected", selected_name)
 		
 func show_menu_view():
@@ -173,27 +176,12 @@ func show_menu_view():
 	for s in slices:
 		s.visible = true
 
-# Rufe dies auf, um nur das aktive Icon anzuzeigen
 func show_active_icon_view(icon_name: String):
-	# 1. Icon finden
 	var idx = option_ids.find(icon_name)
 	if idx != -1 and idx < option_icons.size():
 		center_sprite.texture = option_icons[idx]
-		
-		# Rotation anwenden (aus dem Inspector)
 		center_sprite.rotation_degrees = icon_rotation_offset
-		
-		## Optional: Einfärben
-		#match icon_name:
-			#"Move": center_sprite.modulate = Color(0,1,0)
-			#"Scale": center_sprite.modulate = Color(0,0.5,1)
-			#"Rotate": center_sprite.modulate = Color(1,1,0)
-			#"Delete": center_sprite.modulate = Color(1,0,0)
-			#_: center_sprite.modulate = Color(1,1,1)
-			
 		center_sprite.visible = true
-		
-		# Slices verstecken
 		for s in slices:
 			s.visible = false
 	else:
