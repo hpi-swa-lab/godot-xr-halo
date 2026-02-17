@@ -1,0 +1,53 @@
+[gd_scene load_steps=10 format=3 uid="uid://d0qymsm0sg0rs"]
+
+[ext_resource type="PackedScene" uid="uid://beyblkvp04b6j" path="res://game/assets/Create_a_small_bonsai_1023141008_texture.glb" id="1_687oq"]
+[ext_resource type="Script" uid="uid://dv3blgky08x2l" path="res://game/assets/camera_3d.gd" id="2_7u1rk"]
+[ext_resource type="PackedScene" uid="uid://dc2wtqh5jcj57" path="res://game/scenes/player.tscn" id="3_ahrho"]
+[ext_resource type="PackedScene" uid="uid://38qwtx0behu6" path="res://game/assets/round_big_wodden_tabl_1023151222_texture.tscn" id="3_nsm6p"]
+[ext_resource type="PackedScene" uid="uid://es7ycrdkoyqh" path="res://game/scenes/ground.tscn" id="4_nsm6p"]
+
+[sub_resource type="ConvexPolygonShape3D" id="ConvexPolygonShape3D_nsm6p"]
+points = PackedVector3Array(0.7849101, 0.28871262, -0.006709516, -0.76827025, 0.11429553, -0.29287764, -0.7577406, 0.1127368, -0.2042513, 0.29532954, -0.93066645, -0.06469343, -0.48654783, 0.37552223, 0.60010135, 0.00450477, 0.75525784, -0.5808063, -0.08231805, -0.867513, 0.4848958, 0.032963526, -0.80187887, -0.43621463, 0.6071588, 0.43021622, 0.42378652, -0.25743544, 0.9310607, -0.09392037, -0.48393586, -0.8335972, 0.13697825, 0.21599078, -0.57390696, 0.5673873, -0.62564546, 0.20038679, -0.551009, 0.40584078, -0.8314228, 0.2512152, -0.3703804, -0.83649826, -0.26627144, 0.5905346, 0.19522142, -0.2857901, 0.55311245, 0.63508594, 0.22420909, -0.6574245, 0.3452642, 0.4538005, -0.51184124, 0.7457612, -0.29355153, 0.4065891, -0.8043586, -0.1790193, -0.3378106, -0.7988247, 0.4211595, 0.004504772, 0.53888303, -0.6025995, 0.74528337, 0.19930647, 0.24962243, -0.05268704, 0.85848325, 0.10767411, 0.11961154, 0.86258966, -0.26547587, 0.6859199, 0.4540433, -0.12017863, -0.23717071, 0.24165237, 0.6278904, 0.2590203, -0.565823, -0.40262252, -0.2579197, -0.93298227, -0.18157355, -0.7731188, 0.31655172, -0.3234458, 0.4315626, 0.5408321, 0.42039844, -0.3110648, 0.7457601, -0.5230716)
+
+[sub_resource type="BoxMesh" id="BoxMesh_687oq"]
+size = Vector3(5, 0.1, 5)
+
+[sub_resource type="Skin" id="Skin_ktpg3"]
+
+[sub_resource type="StandardMaterial3D" id="StandardMaterial3D_687oq"]
+albedo_color = Color(0.51, 0.31365, 0.153, 1)
+
+[node name="education_scene" instance=ExtResource("1_687oq")]
+
+[node name="Node3D2" type="Node3D" parent="." index="0"]
+
+[node name="StaticBody3D" type="StaticBody3D" parent="Mesh" index="0"]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Mesh/StaticBody3D" index="0"]
+shape = SubResource("ConvexPolygonShape3D_nsm6p")
+
+[node name="Camera3D" type="Camera3D" parent="." index="2"]
+transform = Transform3D(0.998875, 0.009107512, -0.046537444, 0, 0.98138326, 0.19205953, 0.047420256, -0.19184346, 0.9802792, -0.53466797, 1.536377, 7.2354736)
+fov = 75.93749
+script = ExtResource("2_7u1rk")
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="Camera3D" index="0"]
+transform = Transform3D(-0.9081824, -0.25693494, 0.3304382, 0.010179794, 0.775645, 0.6310876, -0.41845113, 0.5765063, -0.7018114, 5.007141, 2.9833374, 3.4854736)
+
+[node name="Node3D" type="Node3D" parent="." index="3"]
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="Node3D" index="0"]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.022583008, -1.8953247, -0.07495117)
+mesh = SubResource("BoxMesh_687oq")
+skin = SubResource("Skin_ktpg3")
+surface_material_override/0 = SubResource("StandardMaterial3D_687oq")
+
+[node name="round_big_wodden_tabl_1023151222_texture" parent="." index="4" instance=ExtResource("3_nsm6p")]
+transform = Transform3D(5, 0, 0, 0, 5, 0, 0, 0, 5, 0.019042969, -4.050293, 0.48510742)
+
+[node name="Player" parent="." index="5" instance=ExtResource("3_ahrho")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0.5088501, 2.1782837, 2.5389404)
+linear_damp = 3.0
+
+[node name="ground" parent="." index="6" instance=ExtResource("4_nsm6p")]
+transform = Transform3D(7, 0, 0, 0, 7, 0, 0, 0, 7, -0.324646, -2.6438599, 0)
