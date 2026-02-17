@@ -1,26 +1,26 @@
-@tool
 extends Node3D
 
 signal option_selected(option_name)
 
-# --- KONFIGURATION (Daten) ---
+# --- CONFIGURATION ---
 @export var option_ids: Array[String] = ["Move", "Scale", "Rotate", "Reset"]
 @export var option_icons: Array[Texture2D]
 
-# --- KONFIGURATION (Optik) ---
+# --- VISUALS ---
 @export_group("Visuals")
 @export var outer_radius: float = 0.15
 @export var inner_radius: float = 0.05
-@export var color_normal: Color = Color(0.1, 0.1, 0.1, 0.5) 
-@export var color_hover: Color = Color(1.0, 0.2, 0.2, 0.9) 
+@export var color_normal: Color = Color(0.1, 0.1, 0.1, 0.5)
+@export var color_hover: Color = Color(1.0, 0.2, 0.2, 0.9)
 @export_range(0.00001, 0.01, 0.00001, "or_greater") var icon_scale: float = 0.0005
-@export var icon_rotation_offset: Vector3 = Vector3(-90, 0, 0) 
+@export var icon_rotation_offset: Vector3 = Vector3(0, 0, 0)
 
-# --- KONFIGURATION (Audio) ---
+# --- AUDIO ---
 @export_group("Audio")
-@export var sound_error: AudioStream 
+@export var sound_confirm: AudioStream
+@export var sound_reset: AudioStream
 
-# --- INTERNE VARIABLEN ---
+# --- INTERNAL ---
 var slices: Array[MeshInstance3D] = []
 var selected_index: int = -1
 var audio_player: AudioStreamPlayer3D
@@ -31,28 +31,26 @@ func _ready():
 	add_child(audio_player)
 	
 	center_sprite = Sprite3D.new()
-	center_sprite.pixel_size = icon_scale * 1.5 
-	center_sprite.billboard = BaseMaterial3D.BILLBOARD_DISABLED 
-	center_sprite.no_depth_test = true 
-	center_sprite.render_priority = 2 
-	center_sprite.visible = false 
-	center_sprite.rotation_degrees.x = -90 
+	center_sprite.pixel_size = icon_scale * 1.5
+	center_sprite.billboard = BaseMaterial3D.BILLBOARD_DISABLED
+	center_sprite.no_depth_test = true
+	center_sprite.render_priority = 2
+	center_sprite.visible = false
+	center_sprite.rotation_degrees.x = 0
 	add_child(center_sprite)
 	
 	generate_menu()
 
-func _process(_delta):
-	if Engine.is_editor_hint():
-		pass
-
-# --- GENERIERUNG ---
+# --- MENU GENERATION ---
 func generate_menu():
-	for s in slices: 
-		if is_instance_valid(s): s.queue_free()
+	for s in slices:
+		if is_instance_valid(s):
+			s.queue_free()
 	slices.clear()
 	
 	var count = option_ids.size()
-	if count == 0: return
+	if count == 0:
+		return
 	
 	var angle_per_slice = TAU / count
 	
@@ -82,7 +80,8 @@ func generate_menu():
 func _create_slice_mesh(start_angle, end_angle) -> ArrayMesh:
 	var st = SurfaceTool.new()
 	st.begin(Mesh.PRIMITIVE_TRIANGLES)
-	var steps = 32 
+	var steps = 32
+	
 	for s in range(steps):
 		var t1 = float(s) / steps
 		var t2 = float(s + 1) / steps
@@ -95,8 +94,13 @@ func _create_slice_mesh(start_angle, end_angle) -> ArrayMesh:
 		var v_out_2 = Vector3(cos(a2) * outer_radius, sin(a2) * outer_radius, 0)
 		
 		st.set_normal(Vector3(0, 0, 1))
-		st.add_vertex(v_in_1); st.add_vertex(v_out_1); st.add_vertex(v_in_2)
-		st.add_vertex(v_out_1); st.add_vertex(v_out_2); st.add_vertex(v_in_2)
+		st.add_vertex(v_in_1)
+		st.add_vertex(v_out_1)
+		st.add_vertex(v_in_2)
+		st.add_vertex(v_out_1)
+		st.add_vertex(v_out_2)
+		st.add_vertex(v_in_2)
+	
 	return st.commit()
 
 func _add_icon(parent, start, end, texture):
@@ -111,23 +115,22 @@ func _add_icon(parent, start, end, texture):
 	
 	var pos = Vector3(cos(mid_angle) * mid_radius, sin(mid_angle) * mid_radius, 0.002)
 	sprite.position = pos
-	sprite.rotation.z = mid_angle - (PI/2) 
+	sprite.rotation.z = mid_angle - (PI / 2)
 	sprite.modulate = Color(1, 1, 1, 1)
 	parent.add_child(sprite)
 
-# --- INPUT LOGIK (HIER WAR DAS PROBLEM) ---
+# --- INPUT ---
 func update_input(joystick_vector: Vector2):
-	# 1. Deadzone Check
-	# Wir nehmen 0.25. Wenn kleiner -> TU NICHTS (Auswahl bleibt kleben)
-	if joystick_vector.length() < 0.25: 
+	if joystick_vector.length() < 0.25:
 		return
-		
-	# 2. Winkel berechnen
+	
 	var angle = joystick_vector.angle()
-	if angle < 0: angle += TAU
+	if angle < 0:
+		angle += TAU
 	
 	var count = option_ids.size()
-	if count == 0: return
+	if count == 0:
+		return
 	
 	var angle_per_slice = TAU / count
 	var raw_index = int(angle / angle_per_slice) % count
@@ -135,10 +138,8 @@ func update_input(joystick_vector: Vector2):
 	if selected_index != raw_index:
 		selected_index = raw_index
 		_update_selection_visuals()
-		print("SELECTION CHANGED: ", option_ids[selected_index]) # Debug
 
 func reset_selection():
-	print("SELECTION RESET") # Debug
 	selected_index = -1
 	for i in range(slices.size()):
 		var mat = slices[i].material_override
@@ -159,30 +160,49 @@ func _update_selection_visuals():
 			slice.scale = Vector3.ONE
 			slice.position.z = 0.0
 
+# --- CONFIRMATION ---
 func confirm_selection():
 	if selected_index >= 0 and selected_index < option_ids.size():
 		var selected_name = option_ids[selected_index]
-		print("CONFIRMED: ", selected_name) # Debug
 		
+		# Play special sound for Reset action
 		if selected_name == "Reset":
-			if sound_error:
-				audio_player.stream = sound_error
+			if sound_reset:
+				audio_player.stream = sound_reset
 				audio_player.play()
+		# Play normal confirm sound for other actions
+		elif sound_confirm:
+			audio_player.stream = sound_confirm
+			audio_player.play()
 		
 		emit_signal("option_selected", selected_name)
-		
+
+# --- UI STATE ---
 func show_menu_view():
 	center_sprite.visible = false
 	for s in slices:
 		s.visible = true
 
-func show_active_icon_view(icon_name: String):
-	var idx = option_ids.find(icon_name)
-	if idx != -1 and idx < option_icons.size():
-		center_sprite.texture = option_icons[idx]
-		center_sprite.rotation_degrees = icon_rotation_offset
+func hide_menu_slices():
+	"""Hide the menu slices but keep the center icon visible"""
+	for s in slices:
+		s.visible = false
+	# center_sprite stays visible if it has a texture
+
+func show_active_feature_icon(feature_name: String):
+	"""Display the icon of the currently active feature in the center"""
+	var index = option_ids.find(feature_name)
+
+	if index >= 0 and index < option_icons.size() and option_icons[index]:
+		center_sprite.texture = option_icons[index]
 		center_sprite.visible = true
-		for s in slices:
-			s.visible = false
 	else:
-		show_menu_view()
+		center_sprite.visible = false
+
+func hide_active_feature_icon():
+	"""Hide the active feature icon"""
+	center_sprite.visible = false
+
+func is_icon_visible() -> bool:
+	"""Check if the active feature icon is currently visible"""
+	return center_sprite.visible

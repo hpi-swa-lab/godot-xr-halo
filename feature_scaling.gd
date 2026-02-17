@@ -5,17 +5,15 @@ extends Node
 @export var deadzone: float = 0.05
 
 var manager: XRInteractionManager
-var scaling_hand: XRController3D # Wir speichern hier spezifisch die linke Hand
+var scaling_hand: XRController3D
 var initial_hand_height: float = 0.0
 
 func setup(_manager, _fp, _right_controller, _raycast):
 	manager = _manager
-	
-	# WICHTIG: Wir holen uns die Linke Hand vom Manager für das Scaling
 	scaling_hand = manager.left_controller
 	
 	if not scaling_hand:
-		printerr("ERROR: Feature_Scaler kann nicht starten - Linker Controller fehlt im Manager!")
+		printerr("ERROR: Feature_Scaling - Left Controller missing!")
 		is_enabled = false
 		return
 	
@@ -24,11 +22,10 @@ func setup(_manager, _fp, _right_controller, _raycast):
 	set_process(false)
 
 func _on_picked(_obj):
-	if not is_enabled: return
+	if not is_enabled:
+		return
 	
-	# Wir nutzen jetzt die 'scaling_hand' (Links) für die Referenz-Höhe
 	initial_hand_height = scaling_hand.global_position.y
-	print("SCALER: Start Height (Left Hand): ", initial_hand_height)
 	set_process(true)
 
 func _on_dropped(_obj):
@@ -36,16 +33,13 @@ func _on_dropped(_obj):
 
 func _process(delta):
 	var obj = manager.held_object
-	if not obj: return
-
-	# Wir prüfen die Höhe der LINKEN Hand
+	if not obj:
+		return
+	
 	var current_hand_y = scaling_hand.global_position.y
 	var diff = current_hand_y - initial_hand_height
 	
 	if abs(diff) > deadzone:
 		var scale_change_percent = diff * sensitivity * delta
 		var new_scale = obj.scale + (obj.scale * scale_change_percent)
-		
-		# Clamp (Min: 1cm, Max: 10x)
-		new_scale = new_scale.clamp(Vector3(0.01, 0.01, 0.01), Vector3(10.0, 10.0, 10.0))
-		obj.scale = new_scale
+		obj.scale = new_scale.clamp(Vector3(0.01, 0.01, 0.01), Vector3(10.0, 10.0, 10.0))

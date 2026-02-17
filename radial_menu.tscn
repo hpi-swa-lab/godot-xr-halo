@@ -13,7 +13,6 @@ option_icons = Array[Texture2D]([ExtResource("2_jcadp"), ExtResource("3_to0ve"),
 color_normal = Color(0.2, 0.2, 0.2, 0.8)
 color_hover = Color(1, 0, 0, 0.8)
 icon_scale = 9.999999999999996e-05
-icon_rotation_offset = Vector3(0, 0, 0)
-sound_error = ExtResource("6_to0ve")
+sound_reset = ExtResource("6_to0ve")
 
 [node name="Container" type="Node3D" parent="."]
