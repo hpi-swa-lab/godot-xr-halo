@@ -1,0 +1,8 @@
+[gd_scene load_steps=3 format=3 uid="uid://c8wx3hdpdrw8p"]
+
+[ext_resource type="PackedScene" uid="uid://c2u2yasyfotxr" path="res://components/persistent/persistent_staging.tscn" id="1"]
+[ext_resource type="Script" uid="uid://shhk6ax4pxi5" path="res://game_demo/main.gd" id="2_dmefr"]
+
+[node name="Main" instance=ExtResource("1")]
+script = ExtResource("2_dmefr")
+main_scene = "uid://b64v7w5y3yghi"
